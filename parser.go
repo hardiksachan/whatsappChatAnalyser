@@ -8,7 +8,10 @@ import (
 	"time"
 )
 
-const msgLineWithSenderLayout = `(.*)-\s(\w+):\s(.*)`
+const (
+	msgLineWithSenderLayout = `(.*)-\s(\w+):\s(.*)`
+	systemMessagesLayout    = `(.*)-\s+(.*)Tap to\s(.*)`
+)
 
 func ParseChat(in io.Reader) (chat Chat) {
 	reader := bufio.NewReader(in)
@@ -18,21 +21,26 @@ func ParseChat(in io.Reader) (chat Chat) {
 		if len(line) == 0 {
 			break
 		}
-		if match, _ := regexp.MatchString(msgLineWithSenderLayout, string(line)); match {
+		if isMessageWithSenderTag(line) {
 			sender, content, timestamp := parseFirstLine(line)
 			chat = append(chat, Message{sender, content, timestamp})
-		} else {
-			if len(chat) == 0 {
-				continue
-			}
-			if match, _ := regexp.MatchString(`(.*)-\s+(.*)Tap to\s(.*)`, string(line)); match {
-				continue
-			}
-			chat.last().addContent(parseContentOnlyLine(line))
+			continue
 		}
+		if isSystemMessage(line) || len(chat) == 0 {
+			continue
+		}
+		chat.last().addContent(parseContentOnlyLine(line))
 	}
 
 	return
+}
+
+func isSystemMessage(line []byte) bool {
+	return regexp.MustCompile(systemMessagesLayout).MatchString(string(line))
+}
+
+func isMessageWithSenderTag(line []byte) bool {
+	return regexp.MustCompile(msgLineWithSenderLayout).MatchString(string(line))
 }
 
 func parseContentOnlyLine(line []byte) string {
