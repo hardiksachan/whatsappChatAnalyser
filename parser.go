@@ -22,6 +22,12 @@ func ParseChat(in io.Reader) (chat Chat) {
 			sender, content, timestamp := parseFirstLine(line)
 			chat = append(chat, Message{sender, content, timestamp})
 		} else {
+			if len(chat) == 0 {
+				continue
+			}
+			if match, _ := regexp.MatchString(`(.*)-\s+(.*)Tap to\s(.*)`, string(line)); match {
+				continue
+			}
 			chat.last().addContent(parseContentOnlyLine(line))
 		}
 	}

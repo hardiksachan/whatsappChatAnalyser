@@ -14,6 +14,8 @@ type testCase struct {
 	expectedChat parser.Chat
 }
 
+var emptyChat parser.Chat
+
 func TestParseChat(t *testing.T) {
 	cases := []testCase{
 		{
@@ -22,6 +24,58 @@ func TestParseChat(t *testing.T) {
 			expectedChat: parser.Chat{
 				parser.Message{
 					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
+				},
+			},
+		},
+		{
+			name:         "should ignore system message if no message exist",
+			data:         "2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more",
+			expectedChat: emptyChat,
+		},
+		{
+			name: "should ignore system message in the beginning",
+			data: `2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more
+2/24/22, 02:04 - Nicole: call me back!`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
+				},
+			},
+		},
+		{
+			name: "should ignore system message in the end",
+			data: `2/24/22, 02:04 - Nicole: call me back!
+2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
+				},
+			},
+		},
+		{
+			name: "should ignore system message in the middle",
+			data: `2/24/22, 02:04 - Nicole: call me back!
+2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more
+2/24/22, 02:04 - Nicole: call me back!`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
+				},
+				parser.Message{
+					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
+				},
+			},
+		},
+		{
+			name: "should not ignore multiline message containing `-`",
+			data: `2/24/22, 02:04 - Nicole: call me back!
+this includes a - as well!`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole",
+					Content: `call me back!
+this includes a - as well!`,
+					Timestamp: simpleDate(2022, 2, 24, 2, 4),
 				},
 			},
 		},
