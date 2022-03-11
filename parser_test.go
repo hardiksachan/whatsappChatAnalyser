@@ -32,7 +32,7 @@ func TestParseSingleLineMessage(t *testing.T) {
 		})
 
 		t.Run(fmt.Sprintf("succesfully extract message from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Content()
+			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Content
 			want := c.expectedMessage
 
 			if got != want {
@@ -84,7 +84,7 @@ Another Line`,
 		})
 
 		t.Run(fmt.Sprintf("succesfully extract message from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Content()
+			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Content
 			want := c.expectedMessage
 
 			if got != want {
