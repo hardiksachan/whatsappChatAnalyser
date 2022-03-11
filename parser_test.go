@@ -1,118 +1,115 @@
 package whatsappChatAnalyser_test
 
 import (
-	"fmt"
-	"github.com/hardiksachan/whatsappChatAnalyser"
+	parser "github.com/hardiksachan/whatsappChatAnalyser"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 )
 
-type testableMessage struct {
-	in                string
-	expectedSender    string
-	expectedMessage   string
-	expectedTimestamp time.Time
+type testCase struct {
+	name         string
+	data         string
+	expectedChat parser.Chat
 }
 
-func TestParseSingleLineMessage(t *testing.T) {
-	cases := []testableMessage{
-		{"2/24/22, 02:04 - Nicole: call me back!", "Nicole", "call me back!", simpleDate(2022, 2, 24, 2, 4)},
-		{"1/30/22, 02:45 - Chris: alright!", "Chris", "alright!", simpleDate(2022, 01, 30, 2, 45)},
-	}
-
-	for _, c := range cases {
-		t.Run(fmt.Sprintf("succesfully extract sender from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Sender
-			want := c.expectedSender
-
-			if got != want {
-				t.Errorf("want %v, got %v", want, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("succesfully extract message from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Content
-			want := c.expectedMessage
-
-			if got != want {
-				t.Errorf("want %v, got %v", want, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("succesfully extract timestamp from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Timestamp
-			want := c.expectedTimestamp
-
-			if !got.Equal(want) {
-				t.Errorf("want %v, got %v", want, got)
-			}
-		})
-	}
-}
-
-func TestParseMultiLineMessage(t *testing.T) {
-	cases := []testableMessage{
+func TestParseChat(t *testing.T) {
+	cases := []testCase{
 		{
-			`2/24/22, 02:04 - Nicole: call me back!
-I really need to talk to you`,
-			"Nicole",
-			`call me back!
-I really need to talk to you`,
-			simpleDate(2022, 02, 24, 2, 4),
+			name: "parse single line message single message 1",
+			data: "2/24/22, 02:04 - Nicole: call me back!",
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
+				},
+			},
 		},
 		{
-			`2/24/22, 02:04 - Nicole: call me back!
-I really need to talk to you
-Another Line`,
-			"Nicole",
-			`call me back!
-I really need to talk to you
-Another Line`,
-			simpleDate(2022, 02, 24, 2, 4),
+			name: "parse single line single message 2",
+			data: "1/30/22, 02:45 - Chris: alright!",
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Chris", Content: "alright!", Timestamp: simpleDate(2022, 01, 30, 2, 45)},
+			},
 		},
-	}
-
-	for _, c := range cases {
-		t.Run(fmt.Sprintf("succesfully extract sender from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Sender
-			want := c.expectedSender
-
-			if got != want {
-				t.Errorf("want %v, got %v", want, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("succesfully extract message from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Content
-			want := c.expectedMessage
-
-			if got != want {
-				t.Errorf(`want "%v", got "%v"`, want, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("succesfully extract timestamp from %#v", c.in), func(t *testing.T) {
-			got := whatsappChatAnalyser.ParseChat(strings.NewReader(c.in))[0].Timestamp
-			want := c.expectedTimestamp
-
-			if !got.Equal(want) {
-				t.Errorf("want %v, got %v", want, got)
-			}
-		})
-	}
-}
-
-func TestParseMultipleMessages(t *testing.T) {
-	input := `2/24/22, 02:04 - Nicole: call me back!
+		{
+			name: "parse two line single message",
+			data: `2/24/22, 02:04 - Nicole: call me back!
+I really need to talk to you`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole",
+					Content: `call me back!
+I really need to talk to you`,
+					Timestamp: simpleDate(2022, 02, 24, 2, 4),
+				},
+			},
+		},
+		{
+			name: "parse three line single message",
+			data: `2/24/22, 02:04 - Nicole: call me back!
+I really need to talk to you
+Another Line`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole",
+					Content: `call me back!
+I really need to talk to you
+Another Line`,
+					Timestamp: simpleDate(2022, 02, 24, 2, 4),
+				},
+			},
+		},
+		{
+			name: "parse multi line three message chat",
+			data: `2/24/22, 02:04 - Nicole: call me back!
 I really need to talk to you
 1/30/22, 02:45 - Chris: alright!
-1/30/22, 02:52 - Nicole: awesome!`
+1/30/22, 02:52 - Nicole: awesome!`,
+			expectedChat: parser.Chat{
+				parser.Message{
+					Sender: "Nicole",
+					Content: `call me back!
+I really need to talk to you`,
+					Timestamp: simpleDate(2022, 02, 24, 2, 4),
+				},
+				parser.Message{
+					Sender:    "Chris",
+					Content:   "alright!",
+					Timestamp: simpleDate(2022, 1, 30, 2, 45),
+				},
+				parser.Message{
+					Sender:    "Nicole",
+					Content:   "awesome!",
+					Timestamp: simpleDate(2022, 1, 30, 2, 52),
+				},
+			},
+		},
+	}
 
-	got := whatsappChatAnalyser.ParseChat(strings.NewReader(input))
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			got := parser.ParseChat(strings.NewReader(test.data))
+			want := test.expectedChat
 
-	if len(got) != 3 {
-		t.Fatalf(`did not read all messages, input: "%#v", length recieved "%d"`, input, len(got))
+			assertChat(t, got, want)
+		})
+	}
+
+}
+
+func assertChat(t testing.TB, got parser.Chat, want parser.Chat) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("expected length %d, got %d", len(want), len(got))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf(`want:
+	"%#v"
+got:
+	"%#v"`, want, got)
 	}
 }
 
