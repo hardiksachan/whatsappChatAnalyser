@@ -1,7 +1,7 @@
 package whatsappChatAnalyser_test
 
 import (
-	parser "github.com/hardiksachan/whatsappChatAnalyser"
+	analyser "github.com/hardiksachan/whatsappChatAnalyser"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,18 +11,18 @@ import (
 type testCase struct {
 	name         string
 	data         string
-	expectedChat parser.Chat
+	expectedChat analyser.Chat
 }
 
-var emptyChat parser.Chat
+var emptyChat analyser.Chat
 
 func TestParseChat(t *testing.T) {
 	cases := []testCase{
 		{
 			name: "parse single line message single message 1",
 			data: "2/24/22, 02:04 - Nicole: call me back!",
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
 				},
 			},
@@ -36,8 +36,8 @@ func TestParseChat(t *testing.T) {
 			name: "should ignore system message in the beginning",
 			data: `2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more
 2/24/22, 02:04 - Nicole: call me back!`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
 				},
 			},
@@ -46,8 +46,8 @@ func TestParseChat(t *testing.T) {
 			name: "should ignore system message in the end",
 			data: `2/24/22, 02:04 - Nicole: call me back!
 2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
 				},
 			},
@@ -57,11 +57,11 @@ func TestParseChat(t *testing.T) {
 			data: `2/24/22, 02:04 - Nicole: call me back!
 2/24/22, 02:04 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more
 2/24/22, 02:04 - Nicole: call me back!`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
 				},
-				parser.Message{
+				analyser.Message{
 					Sender: "Nicole", Content: "call me back!", Timestamp: simpleDate(2022, 2, 24, 2, 4),
 				},
 			},
@@ -70,8 +70,8 @@ func TestParseChat(t *testing.T) {
 			name: "should not ignore multiline message containing `-`",
 			data: `2/24/22, 02:04 - Nicole: call me back!
 this includes a - as well!`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole",
 					Content: `call me back!
 this includes a - as well!`,
@@ -82,8 +82,8 @@ this includes a - as well!`,
 		{
 			name: "parse single line single message 2",
 			data: "1/30/22, 02:45 - Chris: alright!",
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Chris", Content: "alright!", Timestamp: simpleDate(2022, 01, 30, 2, 45)},
 			},
 		},
@@ -91,8 +91,8 @@ this includes a - as well!`,
 			name: "parse two line single message",
 			data: `2/24/22, 02:04 - Nicole: call me back!
 I really need to talk to you`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole",
 					Content: `call me back!
 I really need to talk to you`,
@@ -105,8 +105,8 @@ I really need to talk to you`,
 			data: `2/24/22, 02:04 - Nicole: call me back!
 I really need to talk to you
 Another Line`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole",
 					Content: `call me back!
 I really need to talk to you
@@ -121,19 +121,19 @@ Another Line`,
 I really need to talk to you
 1/30/22, 02:45 - Chris: alright!
 1/30/22, 02:52 - Nicole: awesome!`,
-			expectedChat: parser.Chat{
-				parser.Message{
+			expectedChat: analyser.Chat{
+				analyser.Message{
 					Sender: "Nicole",
 					Content: `call me back!
 I really need to talk to you`,
 					Timestamp: simpleDate(2022, 02, 24, 2, 4),
 				},
-				parser.Message{
+				analyser.Message{
 					Sender:    "Chris",
 					Content:   "alright!",
 					Timestamp: simpleDate(2022, 1, 30, 2, 45),
 				},
-				parser.Message{
+				analyser.Message{
 					Sender:    "Nicole",
 					Content:   "awesome!",
 					Timestamp: simpleDate(2022, 1, 30, 2, 52),
@@ -144,7 +144,7 @@ I really need to talk to you`,
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			got := parser.ParseChat(strings.NewReader(test.data))
+			got := analyser.ParseChat(strings.NewReader(test.data))
 			want := test.expectedChat
 
 			assertChat(t, got, want)
@@ -153,7 +153,7 @@ I really need to talk to you`,
 
 }
 
-func assertChat(t testing.TB, got parser.Chat, want parser.Chat) {
+func assertChat(t testing.TB, got analyser.Chat, want analyser.Chat) {
 	t.Helper()
 	if len(got) != len(want) {
 		t.Fatalf("expected length %d, got %d", len(want), len(got))
