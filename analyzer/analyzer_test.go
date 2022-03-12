@@ -2,7 +2,7 @@ package analyzer_test
 
 import (
 	"fmt"
-	analyser "github.com/hardiksachan/whatsappChatAnalyser/analyzer"
+	"github.com/hardiksachan/whatsappChatAnalyser/analyzer"
 	"github.com/hardiksachan/whatsappChatAnalyser/types"
 	"reflect"
 	"testing"
@@ -31,7 +31,7 @@ func TestListAllSenders(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("list %d unique senders in %d messages", len(test.expectedResult), len(test.chat)),
 			func(t *testing.T) {
-				got := analyser.ListAllSenders(test.chat)
+				got := analyzer.NewAnalyzer(test.chat).ListAllSenders()
 
 				if !reflect.DeepEqual(got, test.expectedResult) {
 					t.Errorf(`
@@ -69,7 +69,7 @@ func TestCountMessageOfPerson(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			got := analyser.CountMessagesOf(test.sender, test.chat)
+			got := analyzer.NewAnalyzer(test.chat).CountMessagesOf(test.sender)
 
 			if test.expectedResult != got {
 				t.Errorf("want %d, got %d", test.expectedResult, got)
