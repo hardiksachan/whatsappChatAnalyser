@@ -1,4 +1,4 @@
-package whatsappChatAnalyser
+package types
 
 import (
 	"strings"
@@ -17,7 +17,7 @@ type Message struct {
 	Timestamp time.Time
 }
 
-func (m *Message) addContent(content string) {
+func (m *Message) AddContent(content string) {
 	contentBuilder := strings.Builder{}
 	contentBuilder.WriteString(m.Content)
 	contentBuilder.WriteByte(byte('\n'))

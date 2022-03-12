@@ -1,7 +1,8 @@
-package whatsappChatAnalyser
+package parser
 
 import (
 	"bufio"
+	"github.com/hardiksachan/whatsappChatAnalyser/types"
 	"io"
 	"regexp"
 	"strings"
@@ -13,7 +14,7 @@ const (
 	systemMessagesLayout    = `(.*)-\s+(.*)Tap to\s(.*)`
 )
 
-func ParseChat(in io.Reader) (chat Chat) {
+func ParseChat(in io.Reader) (chat types.Chat) {
 	reader := bufio.NewReader(in)
 
 	for {
@@ -23,13 +24,13 @@ func ParseChat(in io.Reader) (chat Chat) {
 		}
 		if isMessageWithSenderTag(line) {
 			sender, content, timestamp := parseFirstLine(line)
-			chat = append(chat, Message{sender, content, timestamp})
+			chat = append(chat, types.Message{sender, content, timestamp})
 			continue
 		}
 		if isSystemMessage(line) || len(chat) == 0 {
 			continue
 		}
-		chat.last().addContent(parseContentOnlyLine(line))
+		chat[len(chat)-1].AddContent(parseContentOnlyLine(line))
 	}
 
 	return

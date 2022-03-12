@@ -1,6 +1,8 @@
-package whatsappChatAnalyser
+package analyzer
 
-func CountMessagesOf(sender string, chat Chat) (count int) {
+import "github.com/hardiksachan/whatsappChatAnalyser/types"
+
+func CountMessagesOf(sender string, chat types.Chat) (count int) {
 	for _, message := range chat {
 		if message.Sender == sender {
 			count++
@@ -9,7 +11,7 @@ func CountMessagesOf(sender string, chat Chat) (count int) {
 	return
 }
 
-func ListAllSenders(chat Chat) (senders []string) {
+func ListAllSenders(chat types.Chat) (senders []string) {
 	senderSet := make(map[string]bool)
 	for _, message := range chat {
 		if _, ok := senderSet[message.Sender]; !ok {
